@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 authors = [{ name = "Leo + Hermes Agent" }]
 license = { text = "MIT" }
 dependencies = [
+  "aiohttp>=3.10.0,<4",
   "jsonschema>=4.23.0,<5",
   "openai>=1.30.0,<2",
   "google-cloud-vision>=3.10.0,<4",

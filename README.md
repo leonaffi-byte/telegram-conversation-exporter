@@ -118,12 +118,25 @@ tce-bot
 
 Bot flow:
 - send a Telegram Desktop export ZIP
+- if the ZIP is small enough for Telegram's bot download limit, the bot processes it normally
+- if the ZIP is too large, the bot sends a one-time web upload link
+- the upload link expires automatically and becomes inactive after one successful upload
+- uploaded ZIPs are processed the same way as direct Telegram uploads
+- uploaded source files are cleaned up after processing, and stale pending uploads are pruned automatically
 - if the ZIP contains one chat, the bot processes it immediately
 - if the ZIP contains multiple chats, the bot asks which chat to process
 - it sends back:
   - conversation.json
   - conversation.md
   - one ZIP containing both outputs
+
+Upload fallback environment variables:
+- `TCE_UPLOAD_BASE_URL` — public base URL for one-time uploads (default: `https://amznl.cc/tce-upload`)
+- `TCE_UPLOAD_HOST` / `TCE_UPLOAD_PORT` — local bind address for the embedded upload server
+- `TCE_UPLOAD_TOKEN_TTL_SECONDS` — how long a one-time link remains valid before upload
+- `TCE_PENDING_UPLOAD_TTL_SECONDS` — how long multi-chat pending ZIPs are retained waiting for `/pick`
+- `TCE_CLEANUP_INTERVAL_SECONDS` — periodic cleanup sweep interval
+- `TCE_UPLOAD_MAX_SIZE_MB` — maximum allowed size for web-uploaded ZIPs
 
 A sample systemd unit is included at:
 - `deploy/tce-telegram-bot.service`
