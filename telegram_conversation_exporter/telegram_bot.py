@@ -544,10 +544,88 @@ class TelegramConversationExporterBot:
             "<p>Upload the Telegram export ZIP here.</p>"
             f"<p>This one-time link expires in about {minutes} minute(s) and becomes inactive after a successful upload.</p>"
             f"<p>Maximum upload size configured on the server: {self.config.upload_max_size_mb} MB.</p>"
-            '<form method="post" enctype="multipart/form-data">'
-            '<input type="file" name="file" accept=".zip,application/zip" required>'
-            '<button type="submit">Upload ZIP</button>'
+            '<form id="upload-form" method="post" enctype="multipart/form-data">'
+            '<input id="file-input" type="file" name="file" accept=".zip,application/zip" required>'
+            '<button id="upload-button" type="submit">Upload ZIP</button>'
             "</form>"
+            '<div id="upload-progress-panel" style="display:none;margin-top:20px;">'
+            '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
+            '<strong id="progress-label">Preparing upload…</strong>'
+            '<span id="progress-percent">0%</span>'
+            "</div>"
+            '<progress id="upload-progress" value="0" max="100" style="width:100%;height:22px;margin-top:10px;"></progress>'
+            '<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">'
+            '<div><strong>Uploaded</strong><br><span id="progress-uploaded">0 MB</span></div>'
+            '<div><strong>Remaining</strong><br><span id="progress-remaining">100%</span></div>'
+            '<div><strong>Speed</strong><br><span id="progress-speed">0 MB/s</span></div>'
+            "</div>"
+            '<p id="progress-status" style="margin-top:12px;color:#444;">Waiting to start…</p>'
+            "</div>"
+            "<script>"
+            "const form = document.getElementById('upload-form');"
+            "const fileInput = document.getElementById('file-input');"
+            "const uploadButton = document.getElementById('upload-button');"
+            "const panel = document.getElementById('upload-progress-panel');"
+            "const bar = document.getElementById('upload-progress');"
+            "const percentEl = document.getElementById('progress-percent');"
+            "const uploadedEl = document.getElementById('progress-uploaded');"
+            "const remainingEl = document.getElementById('progress-remaining');"
+            "const speedEl = document.getElementById('progress-speed');"
+            "const statusEl = document.getElementById('progress-status');"
+            "const labelEl = document.getElementById('progress-label');"
+            "function formatBytes(bytes){"
+            "if(!Number.isFinite(bytes) || bytes <= 0) return '0 B';"
+            "const units=['B','KB','MB','GB','TB'];"
+            "let value=bytes; let unit=0;"
+            "while(value>=1024 && unit<units.length-1){ value/=1024; unit+=1; }"
+            "return `${value.toFixed(value>=10||unit===0?0:1)} ${units[unit]}`;"
+            "}"
+            "form.addEventListener('submit', (event) => {"
+            "event.preventDefault();"
+            "const file = fileInput.files && fileInput.files[0];"
+            "if(!file){ statusEl.textContent='Please choose a ZIP file first.'; return; }"
+            "const xhr = new XMLHttpRequest();"
+            "const data = new FormData(form);"
+            "const startedAt = Date.now();"
+            "panel.style.display='block';"
+            "uploadButton.disabled = true;"
+            "fileInput.disabled = true;"
+            "labelEl.textContent = 'Uploading…';"
+            "statusEl.textContent = 'Starting upload…';"
+            "xhr.open('POST', window.location.href);"
+            "xhr.upload.addEventListener('progress', (e) => {"
+            "if(!e.lengthComputable) return;"
+            "const percent = e.total > 0 ? (e.loaded / e.total) * 100 : 0;"
+            "const elapsed = Math.max((Date.now() - startedAt) / 1000, 0.1);"
+            "const speed = e.loaded / elapsed;"
+            "const remainingPercent = Math.max(0, 100 - percent);"
+            "bar.value = percent;"
+            "percentEl.textContent = `${percent.toFixed(1)}%`;"
+            "uploadedEl.textContent = `${formatBytes(e.loaded)} of ${formatBytes(e.total)}`;"
+            "remainingEl.textContent = `${remainingPercent.toFixed(1)}% remaining`;"
+            "speedEl.textContent = `${formatBytes(speed)}/s`;"
+            "statusEl.textContent = 'Uploading securely to the VPS…';"
+            "});"
+            "xhr.addEventListener('load', () => {"
+            "document.open();"
+            "document.write(xhr.responseText);"
+            "document.close();"
+            "});"
+            "xhr.addEventListener('error', () => {"
+            "labelEl.textContent = 'Upload failed';"
+            "statusEl.textContent = 'Network error during upload. Please request a fresh link in Telegram and try again.';"
+            "uploadButton.disabled = false;"
+            "fileInput.disabled = false;"
+            "});"
+            "xhr.addEventListener('abort', () => {"
+            "labelEl.textContent = 'Upload cancelled';"
+            "statusEl.textContent = 'The upload was cancelled.';"
+            "uploadButton.disabled = false;"
+            "fileInput.disabled = false;"
+            "});"
+            "xhr.send(data);"
+            "});"
+            "</script>"
         )
         return self._html_response("Telegram export upload", body)
 

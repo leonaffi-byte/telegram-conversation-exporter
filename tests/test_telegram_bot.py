@@ -1,6 +1,8 @@
+import asyncio
 import json
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 
 from telegram_conversation_exporter.telegram_bot import (
     BOT_API_DOWNLOAD_LIMIT_BYTES,
@@ -151,3 +153,18 @@ def test_drop_pending_upload_cleans_previous_source(tmp_path):
 
     assert 77 not in bot.pending_uploads
     assert not source_dir.exists()
+
+
+def test_render_upload_form_includes_progress_ui(tmp_path):
+    config = TelegramBotConfig(bot_token="123:abc", workdir=tmp_path)
+    bot = TelegramConversationExporterBot(config)
+    ticket = bot._create_web_upload_ticket(user_id=1, chat_id=2, reply_to_message_id=None, message_thread_id=None)
+    request = SimpleNamespace(match_info={"token": ticket.token})
+
+    response = asyncio.run(bot.render_upload_form(request))
+    text = response.text
+
+    assert 'id="upload-progress"' in text
+    assert 'id="progress-speed"' in text
+    assert 'id="progress-remaining"' in text
+    assert "XMLHttpRequest" in text
