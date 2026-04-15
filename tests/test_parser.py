@@ -50,6 +50,19 @@ def test_parse_zip_export_with_result_json_and_media(tmp_path):
     assert (parser.base_dir / "media" / "voice_note.ogg").exists()
 
 
+def test_parse_zip_export_rejects_unsafe_member_paths(tmp_path):
+    zip_path = tmp_path / "bad-export.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("../escape.json", "{}")
+
+    try:
+        TelegramExportParser(zip_path)
+    except ValueError as exc:
+        assert "Unsafe ZIP entry path" in str(exc)
+    else:
+        raise AssertionError("Expected unsafe ZIP path to be rejected")
+
+
 def test_parser_normalizes_timestamps_to_utc(tmp_path):
     source = tmp_path / "offset_chat.json"
     source.write_text(

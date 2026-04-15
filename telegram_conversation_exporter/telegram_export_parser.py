@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 import zipfile
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .media import infer_media_type
 from .models import MediaInfo, ParsedChat, RawTelegramMessage
+
+
+MAX_ZIP_MEMBERS = 10_000
+MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
 
 
 class TelegramExportParser:
@@ -46,8 +51,7 @@ class TelegramExportParser:
             return source
         self._temp_dir = tempfile.TemporaryDirectory(prefix="tce-zip-")
         extract_root = Path(self._temp_dir.name)
-        with zipfile.ZipFile(source) as archive:
-            archive.extractall(extract_root)
+        self._safe_extract_zip(source, extract_root)
         candidates = [
             path
             for path in extract_root.rglob("*.json")
@@ -63,6 +67,35 @@ class TelegramExportParser:
                 f"Found: {json_list or 'none'}"
             )
         return chosen
+
+    def _safe_extract_zip(self, source: Path, extract_root: Path) -> None:
+        total_uncompressed = 0
+        extracted_members = 0
+        with zipfile.ZipFile(source) as archive:
+            for info in archive.infolist():
+                extracted_members += 1
+                if extracted_members > MAX_ZIP_MEMBERS:
+                    raise ValueError(f"ZIP contains too many files ({extracted_members} > {MAX_ZIP_MEMBERS})")
+                total_uncompressed += info.file_size
+                if total_uncompressed > MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES:
+                    raise ValueError(
+                        "ZIP is too large after decompression "
+                        f"({total_uncompressed} > {MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES} bytes)"
+                    )
+                relative = PurePosixPath(info.filename)
+                if relative.is_absolute() or ".." in relative.parts:
+                    raise ValueError(f"Unsafe ZIP entry path: {info.filename}")
+                destination = extract_root.joinpath(*relative.parts)
+                resolved_destination = destination.resolve()
+                resolved_root = extract_root.resolve()
+                if resolved_root not in resolved_destination.parents and resolved_destination != resolved_root:
+                    raise ValueError(f"ZIP entry escapes extraction directory: {info.filename}")
+                if info.is_dir():
+                    destination.mkdir(parents=True, exist_ok=True)
+                    continue
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(info) as src, destination.open("wb") as dst:
+                    shutil.copyfileobj(src, dst)
 
     def _resolve_chat(self, chat_ref: str) -> dict[str, Any]:
         candidates = [self.payload] if self.export_kind() == "single_chat_json" else self.payload.get("chats", {}).get("list", [])

@@ -6,6 +6,7 @@ Preferred input for v1 is a single ZIP file containing the Telegram export JSON 
 
 Current features:
 - Telegram Desktop JSON ingestion from either a raw JSON file or a ZIP containing `result.json` and media
+- standalone Telegram bot that accepts export ZIP uploads and returns processed outputs
 - single-chat and full-export chat selection
 - range filtering by message ID or time
 - participant anonymization (`Participant 1`, `Participant 2`, ...)
@@ -91,6 +92,41 @@ tce export \
   --transcribe-voice \
   --transcription-provider stub
 ```
+
+## Telegram bot
+
+The repo now also includes a Telegram bot wrapper around the exporter engine.
+
+Basic setup:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+cp .env.example .env
+# fill in TELEGRAM_BOT_TOKEN, GROQ_API_KEY, GOOGLE_APPLICATION_CREDENTIALS
+set -a
+source .env
+set +a
+```
+
+Run the bot:
+
+```bash
+tce-bot
+```
+
+Bot flow:
+- send a Telegram Desktop export ZIP
+- if the ZIP contains one chat, the bot processes it immediately
+- if the ZIP contains multiple chats, the bot asks which chat to process
+- it sends back:
+  - conversation.json
+  - conversation.md
+  - one ZIP containing both outputs
+
+A sample systemd unit is included at:
+- `deploy/tce-telegram-bot.service`
 
 ## Tests
 

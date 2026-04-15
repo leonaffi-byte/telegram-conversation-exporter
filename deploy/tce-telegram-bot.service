@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram Conversation Exporter Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/telegram-conversation-exporter
+EnvironmentFile=/opt/telegram-conversation-exporter/.env
+ExecStart=/opt/telegram-conversation-exporter/.venv/bin/tce-bot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
