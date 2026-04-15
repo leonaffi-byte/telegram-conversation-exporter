@@ -28,7 +28,13 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--transcription-language", default="he")
     export.add_argument("--stub-transcription", action="store_true")
     export.add_argument("--describe-images", action="store_true")
+    export.add_argument("--vision-provider", choices=["groq", "grok", "auto", "stub"], default="groq")
+    export.add_argument("--vision-model", default="meta-llama/llama-4-scout-17b-16e-instruct")
+    export.add_argument("--stub-vision", action="store_true")
     export.add_argument("--ocr", action="store_true")
+    export.add_argument("--ocr-provider", choices=["google_cloud_vision", "google", "gcv", "auto", "stub"], default="google_cloud_vision")
+    export.add_argument("--google-application-credentials")
+    export.add_argument("--stub-ocr", action="store_true")
     export.add_argument("--dry-run", action="store_true")
     export.add_argument("--strict", action="store_true")
     export.add_argument("--media-size-limit-mb", type=int, default=20)
@@ -71,7 +77,13 @@ def main(argv: list[str] | None = None) -> int:
         transcription_language=args.transcription_language,
         stub_transcription=args.stub_transcription,
         describe_images=args.describe_images,
+        vision_provider=args.vision_provider,
+        vision_model=args.vision_model,
+        stub_vision=args.stub_vision,
         ocr=args.ocr,
+        ocr_provider=args.ocr_provider,
+        google_application_credentials=args.google_application_credentials,
+        stub_ocr=args.stub_ocr,
         dry_run=args.dry_run,
         strict=args.strict,
         media_size_limit_mb=args.media_size_limit_mb,

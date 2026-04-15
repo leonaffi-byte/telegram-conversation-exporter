@@ -13,6 +13,7 @@ license = { text = "MIT" }
 dependencies = [
   "jsonschema>=4.23.0,<5",
   "openai>=1.30.0,<2",
+  "google-cloud-vision>=3.10.0,<4",
 ]
 
 [project.scripts]

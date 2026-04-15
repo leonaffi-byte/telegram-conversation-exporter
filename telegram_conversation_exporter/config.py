@@ -26,7 +26,13 @@ class ExportConfig:
     transcription_language: Optional[str] = "he"
     stub_transcription: bool = False
     describe_images: bool = False
+    vision_provider: str = "groq"
+    vision_model: Optional[str] = "meta-llama/llama-4-scout-17b-16e-instruct"
+    stub_vision: bool = False
     ocr: bool = False
+    ocr_provider: str = "google_cloud_vision"
+    google_application_credentials: Optional[str] = None
+    stub_ocr: bool = False
     dry_run: bool = False
     strict: bool = False
     media_size_limit_mb: int = 20

@@ -14,16 +14,23 @@ Current features:
 - Markdown transcript export
 - media validation
 - Groq transcription for Telegram voice messages
+- Groq vision for image description
+- Google Cloud Vision OCR for screenshot/document text extraction
 - default transcription stack tuned for Hebrew:
   - provider: Groq
   - model: `whisper-large-v3-turbo`
   - language hint: `he`
+- default image description stack:
+  - provider: Groq
+  - model: `meta-llama/llama-4-scout-17b-16e-instruct`
+- default OCR stack:
+  - provider: Google Cloud Vision OCR
 - deterministic test suite with fixtures
 
 Notes:
 - This repository is now standalone. It does not depend on Hermes Agent internals.
-- Real transcription requires `GROQ_API_KEY` in the environment.
-- Image description and OCR are still stubbed for now.
+- Real transcription and image description require `GROQ_API_KEY` in the environment.
+- Real OCR requires Google Cloud Vision credentials via `GOOGLE_APPLICATION_CREDENTIALS` or `--google-application-credentials`.
 
 ## Install
 
@@ -35,6 +42,7 @@ pip install -e .
 
 ```bash
 export GROQ_API_KEY=your_groq_api_key
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/google-vision-service-account.json
 ```
 
 ## CLI
@@ -57,7 +65,12 @@ tce export \
   --transcription-provider groq \
   --transcription-model whisper-large-v3-turbo \
   --transcription-language he \
-  --describe-images
+  --describe-images \
+  --vision-provider groq \
+  --vision-model meta-llama/llama-4-scout-17b-16e-instruct \
+  --ocr \
+  --ocr-provider google_cloud_vision \
+  --google-application-credentials /path/to/google-vision-service-account.json
 ```
 
 Dry run:

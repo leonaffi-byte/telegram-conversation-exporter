@@ -19,7 +19,9 @@ def test_pipeline_exports_json_and_markdown_with_best_effort_media(tmp_path):
         transcribe_voice=True,
         stub_transcription=True,
         describe_images=True,
+        stub_vision=True,
         ocr=True,
+        stub_ocr=True,
     )
     pipeline = ExportPipeline(config)
     result = pipeline.run()
@@ -97,7 +99,9 @@ def test_pipeline_marks_unsupported_messages_and_strict_mode_fails(tmp_path):
         transcribe_voice=True,
         stub_transcription=True,
         describe_images=True,
+        stub_vision=True,
         ocr=True,
+        stub_ocr=True,
     )
     with pytest.raises(RuntimeError, match="Strict mode aborted export"):
         ExportPipeline(strict_config).run()
@@ -111,7 +115,9 @@ def test_pipeline_respects_max_media_items_and_creates_cache(tmp_path):
         transcribe_voice=True,
         stub_transcription=True,
         describe_images=True,
+        stub_vision=True,
         ocr=True,
+        stub_ocr=True,
         max_media_items=1,
     )
     payload = ExportPipeline(config).run()["conversation"]

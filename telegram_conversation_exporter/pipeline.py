@@ -8,7 +8,14 @@ from pathlib import Path
 from typing import Any
 
 from .anonymization import build_participant_map
-from .backends import StubOCRBackend, StubTranscriptionBackend, StubVisionBackend, build_transcription_backend
+from .backends import (
+    StubOCRBackend,
+    StubTranscriptionBackend,
+    StubVisionBackend,
+    build_ocr_backend,
+    build_transcription_backend,
+    build_vision_backend,
+)
 from .config import ExportConfig
 from .exporters import conversation_to_dict, write_json_export, write_markdown_export
 from .media import validate_media
@@ -33,13 +40,23 @@ class ExportPipeline:
     def __init__(self, config: ExportConfig, *, transcription_backend=None, vision_backend=None, ocr_backend=None):
         self.config = config
         self.transcription_backend = transcription_backend or self._default_transcription_backend()
-        self.vision_backend = vision_backend or StubVisionBackend()
-        self.ocr_backend = ocr_backend or StubOCRBackend()
+        self.vision_backend = vision_backend or self._default_vision_backend()
+        self.ocr_backend = ocr_backend or self._default_ocr_backend()
 
     def _default_transcription_backend(self):
         if not self.config.transcribe_voice:
             return StubTranscriptionBackend()
         return build_transcription_backend(self.config)
+
+    def _default_vision_backend(self):
+        if not self.config.describe_images:
+            return StubVisionBackend()
+        return build_vision_backend(self.config)
+
+    def _default_ocr_backend(self):
+        if not self.config.ocr:
+            return StubOCRBackend()
+        return build_ocr_backend(self.config)
 
     def dry_run_summary(self) -> dict[str, Any]:
         parser = TelegramExportParser(self.config.source)
