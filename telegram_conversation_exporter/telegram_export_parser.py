@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import tempfile
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -12,8 +14,10 @@ from .models import MediaInfo, ParsedChat, RawTelegramMessage
 class TelegramExportParser:
     def __init__(self, source: Path):
         self.source = Path(source)
-        self.base_dir = self.source.parent
-        self.payload = json.loads(self.source.read_text(encoding="utf-8"))
+        self._temp_dir: tempfile.TemporaryDirectory[str] | None = None
+        self._resolved_source = self._resolve_source_path(self.source)
+        self.base_dir = self._resolved_source.parent
+        self.payload = json.loads(self._resolved_source.read_text(encoding="utf-8"))
 
     def export_kind(self) -> str:
         return "full_export_json" if isinstance(self.payload.get("chats"), dict) else "single_chat_json"
@@ -36,6 +40,29 @@ class TelegramExportParser:
             messages=messages,
             participant_keys=participant_keys,
         )
+
+    def _resolve_source_path(self, source: Path) -> Path:
+        if source.suffix.lower() != ".zip":
+            return source
+        self._temp_dir = tempfile.TemporaryDirectory(prefix="tce-zip-")
+        extract_root = Path(self._temp_dir.name)
+        with zipfile.ZipFile(source) as archive:
+            archive.extractall(extract_root)
+        candidates = [
+            path
+            for path in extract_root.rglob("*.json")
+            if path.is_file() and not path.name.startswith("__MACOSX")
+        ]
+        preferred = [path for path in candidates if path.name.lower() == "result.json"]
+        chosen = preferred[0] if preferred else (candidates[0] if len(candidates) == 1 else None)
+        if chosen is None:
+            json_list = ", ".join(str(path.relative_to(extract_root)) for path in candidates[:10])
+            raise FileNotFoundError(
+                "Could not determine Telegram export JSON inside ZIP. "
+                "Expected result.json or a single JSON file. "
+                f"Found: {json_list or 'none'}"
+            )
+        return chosen
 
     def _resolve_chat(self, chat_ref: str) -> dict[str, Any]:
         candidates = [self.payload] if self.export_kind() == "single_chat_json" else self.payload.get("chats", {}).get("list", [])

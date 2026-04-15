@@ -2,8 +2,10 @@
 
 A standalone CLI-first exporter for turning Telegram Desktop chat exports into AI-ready artifacts.
 
+Preferred input for v1 is a single ZIP file containing the Telegram export JSON plus its media folder, so upload is one file instead of many.
+
 Current features:
-- Telegram Desktop JSON ingestion
+- Telegram Desktop JSON ingestion from either a raw JSON file or a ZIP containing `result.json` and media
 - single-chat and full-export chat selection
 - range filtering by message ID or time
 - participant anonymization (`Participant 1`, `Participant 2`, ...)
@@ -40,14 +42,14 @@ export GROQ_API_KEY=your_groq_api_key
 List chats in a Telegram Desktop full export:
 
 ```bash
-tce list-chats --source /path/to/result.json
+tce list-chats --source /path/to/telegram-export.zip
 ```
 
 Export a range:
 
 ```bash
 tce export \
-  --source /path/to/result.json \
+  --source /path/to/telegram-export.zip \
   --chat-ref chat_01 \
   --range 100:250 \
   --output-dir ./out \

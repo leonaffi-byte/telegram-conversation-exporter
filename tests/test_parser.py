@@ -1,4 +1,5 @@
 import json
+import zipfile
 from pathlib import Path
 
 from telegram_conversation_exporter.telegram_export_parser import TelegramExportParser
@@ -32,6 +33,21 @@ def test_list_and_select_full_export_chat():
     assert {chat['chat_ref'] for chat in chats} == {"chat_one", "chat_two"}
     selected = parser.parse_chat("chat_two")
     assert selected.messages[0].text == "Beta hello"
+
+
+def test_parse_zip_export_with_result_json_and_media(tmp_path):
+    zip_path = tmp_path / "telegram-export.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.write(FIXTURES / "media_chat.json", arcname="result.json")
+        archive.write(FIXTURES / "media" / "voice_note.ogg", arcname="media/voice_note.ogg")
+        archive.write(FIXTURES / "media" / "screenshot.jpg", arcname="media/screenshot.jpg")
+
+    parser = TelegramExportParser(zip_path)
+    chat = parser.parse_chat("chat_media")
+
+    assert chat.chat_ref == "chat_media"
+    assert parser.base_dir.name.startswith("tce-zip-")
+    assert (parser.base_dir / "media" / "voice_note.ogg").exists()
 
 
 def test_parser_normalizes_timestamps_to_utc(tmp_path):

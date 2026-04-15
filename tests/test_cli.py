@@ -1,4 +1,5 @@
 import json
+import zipfile
 from pathlib import Path
 
 from telegram_conversation_exporter.cli import main
@@ -52,3 +53,26 @@ def test_cli_list_chats_prints_available_chat_refs(capsys):
     assert exit_code == 0
     out = json.loads(capsys.readouterr().out)
     assert {item["chat_ref"] for item in out} == {"chat_one", "chat_two"}
+
+
+def test_cli_accepts_zip_source(capsys, tmp_path):
+    zip_path = tmp_path / "telegram-export.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.write(FIXTURES / "media_chat.json", arcname="result.json")
+        archive.write(FIXTURES / "media" / "voice_note.ogg", arcname="media/voice_note.ogg")
+        archive.write(FIXTURES / "media" / "screenshot.jpg", arcname="media/screenshot.jpg")
+
+    exit_code = main([
+        "export",
+        "--source",
+        str(zip_path),
+        "--chat-ref",
+        "chat_media",
+        "--output-dir",
+        str(tmp_path / "out"),
+        "--dry-run",
+    ])
+
+    assert exit_code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["chat_ref"] == "chat_media"
