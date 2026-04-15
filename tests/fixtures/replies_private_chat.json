@@ -1,0 +1,33 @@
+{
+  "id": "chat_replies",
+  "name": "Replies Chat",
+  "type": "personal_chat",
+  "messages": [
+    {
+      "id": 10,
+      "type": "message",
+      "date": "2025-01-02T10:00:00+00:00",
+      "from": "Alice",
+      "from_id": "user_alice",
+      "text": "First"
+    },
+    {
+      "id": 11,
+      "type": "message",
+      "date": "2025-01-02T10:01:00+00:00",
+      "from": "Bob",
+      "from_id": "user_bob",
+      "reply_to_message_id": 10,
+      "text": "Reply in range"
+    },
+    {
+      "id": 12,
+      "type": "message",
+      "date": "2025-01-02T10:02:00+00:00",
+      "from": "Alice",
+      "from_id": "user_alice",
+      "reply_to_message_id": 99,
+      "text": "Reply missing"
+    }
+  ]
+}

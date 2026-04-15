@@ -1,0 +1,37 @@
+{
+  "about": "Telegram Desktop export",
+  "chats": {
+    "list": [
+      {
+        "id": "chat_one",
+        "name": "Team Alpha",
+        "type": "private_group",
+        "messages": [
+          {
+            "id": 100,
+            "type": "message",
+            "date": "2025-02-01T12:00:00+00:00",
+            "from": "Alice",
+            "from_id": "user_alice",
+            "text": "Alpha hello"
+          }
+        ]
+      },
+      {
+        "id": "chat_two",
+        "name": "Team Beta",
+        "type": "personal_chat",
+        "messages": [
+          {
+            "id": 200,
+            "type": "message",
+            "date": "2025-02-01T13:00:00+00:00",
+            "from": "Bob",
+            "from_id": "user_bob",
+            "text": "Beta hello"
+          }
+        ]
+      }
+    ]
+  }
+}

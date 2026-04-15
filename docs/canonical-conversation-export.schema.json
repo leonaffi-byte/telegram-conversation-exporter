@@ -1,0 +1,463 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/canonical-conversation-export.schema.json",
+  "title": "CanonicalConversationExport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "metadata",
+    "participants",
+    "messages",
+    "run_summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "participants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/participant" }
+    },
+    "messages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/message" }
+    },
+    "run_summary": {
+      "$ref": "#/$defs/runSummary"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nullableString": {
+      "type": ["string", "null"]
+    },
+    "isoDateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "messageKind": {
+      "type": "string",
+      "enum": [
+        "text",
+        "voice",
+        "image",
+        "document",
+        "service",
+        "unsupported"
+      ]
+    },
+    "replyStatus": {
+      "type": "string",
+      "enum": ["in_range", "out_of_range", "missing", "unknown"]
+    },
+    "processingStatus": {
+      "type": "string",
+      "enum": ["ok", "skipped", "failed", "not_requested"]
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_id", "label", "index"],
+      "properties": {
+        "participant_id": {
+          "type": "string",
+          "description": "Stable anonymized identifier for the participant within this source chat/export."
+        },
+        "label": {
+          "type": "string",
+          "pattern": "^Participant [1-9][0-9]*$"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "message_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pipeline_version",
+        "source_type",
+        "source_export_kind",
+        "generated_at",
+        "chat_ref",
+        "chat_title_redacted",
+        "participant_count",
+        "enabled_features",
+        "privacy_limitations",
+        "range"
+      ],
+      "properties": {
+        "pipeline_version": { "$ref": "#/$defs/nonEmptyString" },
+        "source_type": {
+          "type": "string",
+          "const": "telegram_export"
+        },
+        "source_export_kind": {
+          "type": "string",
+          "enum": ["single_chat_json", "full_export_json"]
+        },
+        "generated_at": { "$ref": "#/$defs/isoDateTime" },
+        "chat_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "chat_title_redacted": { "$ref": "#/$defs/nonEmptyString" },
+        "participant_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabled_features": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "transcribe_voice",
+            "describe_images",
+            "ocr"
+          ],
+          "properties": {
+            "transcribe_voice": { "type": "boolean" },
+            "describe_images": { "type": "boolean" },
+            "ocr": { "type": "boolean" }
+          }
+        },
+        "privacy_limitations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["full_chat", "message_id_range", "time_range"]
+            },
+            "start_message_id": { "$ref": "#/$defs/nullableString" },
+            "end_message_id": { "$ref": "#/$defs/nullableString" },
+            "start_time_utc": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            },
+            "end_time_utc": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_message_id",
+        "sequence_index",
+        "kind",
+        "source",
+        "sender",
+        "timestamps",
+        "normalized",
+        "relations",
+        "processing"
+      ],
+      "properties": {
+        "canonical_message_id": {
+          "type": "string",
+          "description": "Stable canonical identifier for this exported message record."
+        },
+        "sequence_index": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based chronological index within the exported range."
+        },
+        "kind": { "$ref": "#/$defs/messageKind" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "message_id",
+            "raw_message_type",
+            "is_edited",
+            "is_forwarded"
+          ],
+          "properties": {
+            "message_id": {
+              "type": "string",
+              "description": "Original Telegram message ID represented as a string for safety."
+            },
+            "reply_to_message_id": { "$ref": "#/$defs/nullableString" },
+            "raw_message_type": { "$ref": "#/$defs/nonEmptyString" },
+            "raw_media_type": { "$ref": "#/$defs/nullableString" },
+            "is_edited": { "type": "boolean" },
+            "edited_at": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            },
+            "is_forwarded": { "type": "boolean" },
+            "forwarded_from_sanitized": { "$ref": "#/$defs/nullableString" }
+          }
+        },
+        "sender": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["participant_id", "participant_label"],
+          "properties": {
+            "participant_id": { "$ref": "#/$defs/nullableString" },
+            "participant_label": { "$ref": "#/$defs/nullableString" },
+            "sender_type": {
+              "type": "string",
+              "enum": ["participant", "service", "unknown", "bot"]
+            }
+          }
+        },
+        "timestamps": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_raw", "utc"],
+          "properties": {
+            "source_raw": { "$ref": "#/$defs/nonEmptyString" },
+            "utc": { "$ref": "#/$defs/isoDateTime" }
+          }
+        },
+        "normalized": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["plain_text"],
+          "properties": {
+            "plain_text": { "$ref": "#/$defs/nullableString" },
+            "rendered_markdown_block": { "$ref": "#/$defs/nullableString" },
+            "service_text": { "$ref": "#/$defs/nullableString" }
+          }
+        },
+        "media": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "relative_path",
+            "available",
+            "file_size_bytes"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "voice",
+                "image",
+                "document",
+                "video_note",
+                "audio",
+                "sticker",
+                "unknown"
+              ]
+            },
+            "relative_path": { "$ref": "#/$defs/nullableString" },
+            "mime_type": { "$ref": "#/$defs/nullableString" },
+            "available": { "type": "boolean" },
+            "file_size_bytes": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "sha256": { "$ref": "#/$defs/nullableString" },
+            "duration_seconds": {
+              "type": ["number", "null"],
+              "minimum": 0
+            },
+            "width": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "height": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            }
+          }
+        },
+        "relations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reply_status"],
+          "properties": {
+            "reply_status": { "$ref": "#/$defs/replyStatus" },
+            "reply_preview": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["message_id", "sender_label", "text"],
+              "properties": {
+                "message_id": { "$ref": "#/$defs/nonEmptyString" },
+                "sender_label": { "$ref": "#/$defs/nullableString" },
+                "text": { "$ref": "#/$defs/nonEmptyString" }
+              }
+            }
+          }
+        },
+        "enrichment": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "transcription": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["status", "text", "backend", "error_code"],
+              "properties": {
+                "status": { "$ref": "#/$defs/processingStatus" },
+                "text": { "$ref": "#/$defs/nullableString" },
+                "language": { "$ref": "#/$defs/nullableString" },
+                "confidence": {
+                  "type": ["number", "null"],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "backend": { "$ref": "#/$defs/nullableString" },
+                "error_code": { "$ref": "#/$defs/nullableString" }
+              }
+            },
+            "vision": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["status", "description", "backend", "error_code"],
+              "properties": {
+                "status": { "$ref": "#/$defs/processingStatus" },
+                "description": { "$ref": "#/$defs/nullableString" },
+                "category": {
+                  "type": ["string", "null"],
+                  "enum": ["photo", "screenshot", "document", "unknown", null]
+                },
+                "backend": { "$ref": "#/$defs/nullableString" },
+                "error_code": { "$ref": "#/$defs/nullableString" }
+              }
+            },
+            "ocr": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["status", "text", "backend", "error_code"],
+              "properties": {
+                "status": { "$ref": "#/$defs/processingStatus" },
+                "text": { "$ref": "#/$defs/nullableString" },
+                "backend": { "$ref": "#/$defs/nullableString" },
+                "error_code": { "$ref": "#/$defs/nullableString" }
+              }
+            }
+          }
+        },
+        "processing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["export_status", "warnings", "errors"],
+          "properties": {
+            "export_status": {
+              "type": "string",
+              "enum": ["ok", "partial", "failed"]
+            },
+            "warnings": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmptyString" }
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["stage", "code", "message"],
+                "properties": {
+                  "stage": {
+                    "type": "string",
+                    "enum": [
+                      "parse",
+                      "validation",
+                      "transcription",
+                      "vision",
+                      "ocr",
+                      "export"
+                    ]
+                  },
+                  "code": { "$ref": "#/$defs/nonEmptyString" },
+                  "message": { "$ref": "#/$defs/nonEmptyString" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "runSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_messages",
+        "message_kind_counts",
+        "missing_media_files",
+        "transcription",
+        "vision",
+        "ocr",
+        "processing_duration_seconds"
+      ],
+      "properties": {
+        "total_messages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "message_kind_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "text",
+            "voice",
+            "image",
+            "document",
+            "service",
+            "unsupported"
+          ],
+          "properties": {
+            "text": { "type": "integer", "minimum": 0 },
+            "voice": { "type": "integer", "minimum": 0 },
+            "image": { "type": "integer", "minimum": 0 },
+            "document": { "type": "integer", "minimum": 0 },
+            "service": { "type": "integer", "minimum": 0 },
+            "unsupported": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "missing_media_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "transcription": {
+          "$ref": "#/$defs/featureRunSummary"
+        },
+        "vision": {
+          "$ref": "#/$defs/featureRunSummary"
+        },
+        "ocr": {
+          "$ref": "#/$defs/featureRunSummary"
+        },
+        "processing_duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "featureRunSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested", "succeeded", "failed", "skipped"],
+      "properties": {
+        "requested": { "type": "integer", "minimum": 0 },
+        "succeeded": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

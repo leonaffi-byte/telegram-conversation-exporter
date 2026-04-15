@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telegram-conversation-exporter"
+version = "0.1.0"
+description = "CLI tool for converting Telegram Desktop exports into AI-ready conversation artifacts"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Leo + Hermes Agent" }]
+license = { text = "MIT" }
+dependencies = [
+  "jsonschema>=4.23.0,<5",
+  "hermes-agent>=0.8.0",
+]
+
+[project.scripts]
+tce = "telegram_conversation_exporter.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["telegram_conversation_exporter"]
+
+[tool.setuptools.package-data]
+telegram_conversation_exporter = ["canonical_conversation_export.schema.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-n 0"

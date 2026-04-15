@@ -1,0 +1,65 @@
+{
+  "id": "chat_media",
+  "name": "Media Chat",
+  "type": "personal_chat",
+  "messages": [
+    {
+      "id": 20,
+      "type": "message",
+      "date": "2025-01-03T10:00:00+00:00",
+      "from": "Alice",
+      "from_id": "user_alice",
+      "text": "edited text",
+      "edited": "2025-01-03T10:05:00+00:00"
+    },
+    {
+      "id": 21,
+      "type": "message",
+      "date": "2025-01-03T10:06:00+00:00",
+      "from": "Bob",
+      "from_id": "user_bob",
+      "text": "forwarded",
+      "forwarded_from": "Secret Channel"
+    },
+    {
+      "id": 22,
+      "type": "message",
+      "date": "2025-01-03T10:07:00+00:00",
+      "from": "Alice",
+      "from_id": "user_alice",
+      "text": "voice here",
+      "file": "media/voice_note.ogg",
+      "media_type": "voice_message"
+    },
+    {
+      "id": 23,
+      "type": "message",
+      "date": "2025-01-03T10:08:00+00:00",
+      "from": "Bob",
+      "from_id": "user_bob",
+      "text": "voice missing",
+      "file": "media/missing_voice.ogg",
+      "media_type": "voice_message"
+    },
+    {
+      "id": 24,
+      "type": "message",
+      "date": "2025-01-03T10:09:00+00:00",
+      "from": "Alice",
+      "from_id": "user_alice",
+      "text": "image here",
+      "photo": "media/screenshot.jpg",
+      "media_type": "photo"
+    },
+    {
+      "id": 25,
+      "type": "message",
+      "date": "2025-01-03T10:10:00+00:00",
+      "from": "Bob",
+      "from_id": "user_bob",
+      "text": "image missing",
+      "photo": "media/missing_image.jpg",
+      "media_type": "photo"
+    }
+  ]
+}
