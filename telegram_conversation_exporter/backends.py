@@ -202,7 +202,7 @@ def _resolve_google_credentials_path(configured_path: str | None = None) -> str 
 class RealTranscriptionBackend:
     requested_provider: str = "groq"
     model: str | None = DEFAULT_GROQ_TRANSCRIPTION_MODEL
-    language: str | None = "he"
+    language: str | None = "ru"
     provider: str = "groq"
     name: str = "groq-whisper"
 
@@ -377,7 +377,7 @@ def build_transcription_backend(config) -> TranscriptionBackend:
     return RealTranscriptionBackend(
         requested_provider=provider,
         model=getattr(config, "transcription_model", DEFAULT_GROQ_TRANSCRIPTION_MODEL),
-        language=getattr(config, "transcription_language", "he"),
+        language=getattr(config, "transcription_language", "ru"),
     )
 
 

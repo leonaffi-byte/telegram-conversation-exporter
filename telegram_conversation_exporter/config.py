@@ -23,7 +23,7 @@ class ExportConfig:
     transcribe_voice: bool = False
     transcription_provider: str = "groq"
     transcription_model: Optional[str] = "whisper-large-v3-turbo"
-    transcription_language: Optional[str] = "he"
+    transcription_language: Optional[str] = "ru"
     stub_transcription: bool = False
     describe_images: bool = False
     vision_provider: str = "groq"

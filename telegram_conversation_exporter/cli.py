@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--transcribe-voice", action="store_true")
     export.add_argument("--transcription-provider", choices=["groq", "grok", "auto", "stub"], default="groq")
     export.add_argument("--transcription-model", default="whisper-large-v3-turbo")
-    export.add_argument("--transcription-language", default="he")
+    export.add_argument("--transcription-language", default="ru")
     export.add_argument("--stub-transcription", action="store_true")
     export.add_argument("--describe-images", action="store_true")
     export.add_argument("--vision-provider", choices=["groq", "grok", "auto", "stub"], default="groq")

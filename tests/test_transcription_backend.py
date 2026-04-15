@@ -14,7 +14,7 @@ from telegram_conversation_exporter.pipeline import ExportPipeline
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def test_build_transcription_backend_defaults_to_hebrew_and_grok_alias(tmp_path):
+def test_build_transcription_backend_defaults_to_russian_and_grok_alias(tmp_path):
     config = ExportConfig(
         source=FIXTURES / "simple_private_chat.json",
         chat_ref="chat_simple",
@@ -24,7 +24,7 @@ def test_build_transcription_backend_defaults_to_hebrew_and_grok_alias(tmp_path)
     backend = build_transcription_backend(config)
     assert isinstance(backend, RealTranscriptionBackend)
     assert backend.provider == "groq"
-    assert backend.language == "he"
+    assert backend.language == "ru"
     assert backend.model == "whisper-large-v3-turbo"
 
     config.transcription_provider = "grok"
@@ -79,12 +79,12 @@ def test_real_transcription_backend_calls_groq_with_expected_defaults(monkeypatc
     result = backend.transcribe(audio_path)
 
     assert result.text == "שלום עולם"
-    assert result.language == "he"
+    assert result.language == "ru"
     assert FakeClient.last_instance.kwargs["api_key"] == "token"
     assert FakeClient.last_instance.kwargs["base_url"] == exporter_backends.GROQ_BASE_URL
     call = FakeClient.last_instance.audio.transcriptions.calls[0]
     assert call["model"] == "whisper-large-v3-turbo"
-    assert call["language"] == "he"
+    assert call["language"] == "ru"
     assert call["response_format"] == "verbose_json"
 
 

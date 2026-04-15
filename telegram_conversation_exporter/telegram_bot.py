@@ -38,7 +38,7 @@ class TelegramBotConfig:
     ocr: bool = True
     transcription_provider: str = "groq"
     transcription_model: str = "whisper-large-v3-turbo"
-    transcription_language: str = "he"
+    transcription_language: str = "ru"
     vision_provider: str = "groq"
     vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
     ocr_provider: str = "google_cloud_vision"
@@ -66,7 +66,7 @@ class TelegramBotConfig:
             ocr=_env_bool("TCE_ENABLE_OCR", True),
             transcription_provider=os.getenv("TCE_TRANSCRIPTION_PROVIDER", "groq"),
             transcription_model=os.getenv("TCE_TRANSCRIPTION_MODEL", "whisper-large-v3-turbo"),
-            transcription_language=os.getenv("TCE_TRANSCRIPTION_LANGUAGE", "he"),
+            transcription_language=os.getenv("TCE_TRANSCRIPTION_LANGUAGE", "ru"),
             vision_provider=os.getenv("TCE_VISION_PROVIDER", "groq"),
             vision_model=os.getenv("TCE_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct"),
             ocr_provider=os.getenv("TCE_OCR_PROVIDER", "google_cloud_vision"),

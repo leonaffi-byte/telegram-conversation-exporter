@@ -29,6 +29,7 @@ def test_bot_config_from_env_defaults(monkeypatch, tmp_path):
     assert config.transcribe_voice is True
     assert config.describe_images is True
     assert config.ocr is True
+    assert config.transcription_language == "ru"
 
 
 def test_build_export_config_uses_bot_defaults(tmp_path):

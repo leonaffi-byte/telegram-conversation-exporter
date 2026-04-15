@@ -17,10 +17,10 @@ Current features:
 - Groq transcription for Telegram voice messages
 - Groq vision for image description
 - Google Cloud Vision OCR for screenshot/document text extraction
-- default transcription stack tuned for Hebrew:
+- default transcription stack tuned for Russian:
   - provider: Groq
   - model: `whisper-large-v3-turbo`
-  - language hint: `he`
+  - language hint: `ru`
 - default image description stack:
   - provider: Groq
   - model: `meta-llama/llama-4-scout-17b-16e-instruct`
@@ -65,7 +65,7 @@ tce export \
   --transcribe-voice \
   --transcription-provider groq \
   --transcription-model whisper-large-v3-turbo \
-  --transcription-language he \
+  --transcription-language ru \
   --describe-images \
   --vision-provider groq \
   --vision-model meta-llama/llama-4-scout-17b-16e-instruct \
