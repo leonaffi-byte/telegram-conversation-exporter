@@ -4,10 +4,12 @@ import zipfile
 from pathlib import Path
 
 from telegram_conversation_exporter.telegram_bot import (
+    BOT_API_DOWNLOAD_LIMIT_BYTES,
     DEFAULT_BOT_WORKDIR,
     TelegramBotConfig,
     build_export_config,
     create_result_bundle,
+    format_size_mb,
     list_export_chats,
 )
 
@@ -73,3 +75,8 @@ def test_list_export_chats_reads_zip_source(tmp_path):
     chats = list_export_chats(zip_path)
 
     assert {chat["chat_ref"] for chat in chats} == {"chat_one", "chat_two"}
+
+
+def test_format_size_mb_formats_expected_value():
+    assert format_size_mb(BOT_API_DOWNLOAD_LIMIT_BYTES) == "20.0 MB"
+    assert format_size_mb(None) == "unknown size"

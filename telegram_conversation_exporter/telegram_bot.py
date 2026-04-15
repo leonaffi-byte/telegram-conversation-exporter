@@ -8,8 +8,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+import logging
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatAction
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -26,6 +29,8 @@ from .telegram_export_parser import TelegramExportParser
 
 DEFAULT_BOT_WORKDIR = Path("/tmp/tce-telegram-bot")
 CHAT_PICK_PREFIX = "pickchat:"
+BOT_API_DOWNLOAD_LIMIT_BYTES = 20 * 1024 * 1024
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -127,6 +132,12 @@ def list_export_chats(source_path: Path) -> list[dict[str, str]]:
     return TelegramExportParser(source_path).list_chats()
 
 
+def format_size_mb(size_bytes: Optional[int]) -> str:
+    if size_bytes is None:
+        return "unknown size"
+    return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
 class TelegramConversationExporterBot:
     def __init__(self, config: TelegramBotConfig):
         self.config = config
@@ -142,6 +153,7 @@ class TelegramConversationExporterBot:
         app.add_handler(CommandHandler("pick", self.pick_command))
         app.add_handler(CallbackQueryHandler(self.chat_pick_callback, pattern=f"^{CHAT_PICK_PREFIX}"))
         app.add_handler(MessageHandler(filters.Document.ALL, self.handle_document))
+        app.add_error_handler(self.handle_error)
         return app
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -211,6 +223,16 @@ class TelegramConversationExporterBot:
             await message.reply_text("Please send a .zip file containing the Telegram export JSON and media.")
             return
 
+        file_size = document.file_size
+        if file_size is not None and file_size > BOT_API_DOWNLOAD_LIMIT_BYTES:
+            await message.reply_text(
+                "That ZIP is too large for the standard Telegram Bot API download limit.\n"
+                f"- your file: {format_size_mb(file_size)}\n"
+                f"- current bot limit: {format_size_mb(BOT_API_DOWNLOAD_LIMIT_BYTES)}\n\n"
+                "Please send a smaller export ZIP, split it into smaller ranges, or export fewer media files."
+            )
+            return
+
         user_id = update.effective_user.id
         lock = self.user_locks.setdefault(user_id, asyncio.Lock())
         async with lock:
@@ -220,8 +242,19 @@ class TelegramConversationExporterBot:
                 shutil.rmtree(upload_dir)
             upload_dir.mkdir(parents=True, exist_ok=True)
             source_path = upload_dir / document.file_name
-            telegram_file = await context.bot.get_file(document.file_id)
-            await telegram_file.download_to_drive(custom_path=str(source_path))
+            try:
+                telegram_file = await context.bot.get_file(document.file_id)
+                await telegram_file.download_to_drive(custom_path=str(source_path))
+            except BadRequest as exc:
+                if "file is too big" in str(exc).lower():
+                    await message.reply_text(
+                        "Telegram refused the ZIP because it is too large for bot download via the standard Bot API.\n"
+                        f"- your file: {format_size_mb(file_size)}\n"
+                        f"- current bot limit: {format_size_mb(BOT_API_DOWNLOAD_LIMIT_BYTES)}\n\n"
+                        "Please send a smaller export ZIP, split the chat into smaller date/message ranges, or reduce included media."
+                    )
+                    return
+                raise
 
             try:
                 chats = await asyncio.to_thread(list_export_chats, source_path)
@@ -320,6 +353,16 @@ class TelegramConversationExporterBot:
                 await message.reply_document(document=f, filename=f"{Path(original_name).stem}-{chat_ref}-outputs.zip")
         finally:
             shutil.rmtree(job_dir, ignore_errors=True)
+
+    async def handle_error(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        LOGGER.exception("Unhandled bot error", exc_info=context.error)
+        if isinstance(update, Update) and update.effective_message:
+            try:
+                await update.effective_message.reply_text(
+                    "Something went wrong while handling that request. Please try again, and if it keeps happening I can inspect the server logs."
+                )
+            except Exception:
+                LOGGER.exception("Failed to send error message back to Telegram user")
 
     async def _authorize(self, update: Update, callback_mode: bool = False) -> bool:
         user = update.effective_user
