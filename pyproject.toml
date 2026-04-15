@@ -12,7 +12,7 @@ authors = [{ name = "Leo + Hermes Agent" }]
 license = { text = "MIT" }
 dependencies = [
   "jsonschema>=4.23.0,<5",
-  "hermes-agent>=0.8.0",
+  "openai>=1.30.0,<2",
 ]
 
 [project.scripts]

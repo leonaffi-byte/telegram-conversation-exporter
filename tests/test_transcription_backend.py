@@ -1,7 +1,12 @@
 from pathlib import Path
 
 from telegram_conversation_exporter import backends as exporter_backends
-from telegram_conversation_exporter.backends import BackendResult, RealTranscriptionBackend, StubTranscriptionBackend, build_transcription_backend
+from telegram_conversation_exporter.backends import (
+    BackendResult,
+    RealTranscriptionBackend,
+    StubTranscriptionBackend,
+    build_transcription_backend,
+)
 from telegram_conversation_exporter.config import ExportConfig
 from telegram_conversation_exporter import pipeline as exporter_pipeline
 from telegram_conversation_exporter.pipeline import ExportPipeline
@@ -9,11 +14,7 @@ from telegram_conversation_exporter.pipeline import ExportPipeline
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def test_build_transcription_backend_defaults_to_hebrew_and_grok_alias(monkeypatch, tmp_path):
-    monkeypatch.setattr(exporter_backends.transcription_tools, "_HAS_FASTER_WHISPER", True)
-    monkeypatch.setattr(exporter_backends.transcription_tools, "_has_local_command", lambda: False)
-    monkeypatch.setattr(exporter_backends.transcription_tools, "_has_openai_audio_backend", lambda: False)
-
+def test_build_transcription_backend_defaults_to_hebrew_and_grok_alias(tmp_path):
     config = ExportConfig(
         source=FIXTURES / "simple_private_chat.json",
         chat_ref="chat_simple",
@@ -22,12 +23,11 @@ def test_build_transcription_backend_defaults_to_hebrew_and_grok_alias(monkeypat
     )
     backend = build_transcription_backend(config)
     assert isinstance(backend, RealTranscriptionBackend)
-    assert backend.provider == "local"
+    assert backend.provider == "groq"
     assert backend.language == "he"
+    assert backend.model == "whisper-large-v3-turbo"
 
     config.transcription_provider = "grok"
-    monkeypatch.setattr(exporter_backends.transcription_tools, "_HAS_FASTER_WHISPER", False)
-    monkeypatch.setattr(exporter_backends.os, "getenv", lambda key, default=None: "token" if key == "GROQ_API_KEY" else default)
     backend = build_transcription_backend(config)
     assert isinstance(backend, RealTranscriptionBackend)
     assert backend.provider == "groq"
@@ -43,6 +43,49 @@ def test_build_transcription_backend_honors_stub_flag(tmp_path):
     )
     backend = build_transcription_backend(config)
     assert isinstance(backend, StubTranscriptionBackend)
+
+
+def test_real_transcription_backend_calls_groq_with_expected_defaults(monkeypatch, tmp_path):
+    audio_path = tmp_path / "sample.ogg"
+    audio_path.write_bytes(b"fake-audio")
+
+    class FakeTranscriptions:
+        def __init__(self):
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            return {"text": "שלום עולם", "language": "he"}
+
+    class FakeAudio:
+        def __init__(self):
+            self.transcriptions = FakeTranscriptions()
+
+    class FakeClient:
+        last_instance = None
+
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.audio = FakeAudio()
+            FakeClient.last_instance = self
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(exporter_backends, "OpenAI", FakeClient)
+    monkeypatch.setattr(exporter_backends.os, "getenv", lambda key, default=None: "token" if key == "GROQ_API_KEY" else default)
+
+    backend = RealTranscriptionBackend()
+    result = backend.transcribe(audio_path)
+
+    assert result.text == "שלום עולם"
+    assert result.language == "he"
+    assert FakeClient.last_instance.kwargs["api_key"] == "token"
+    assert FakeClient.last_instance.kwargs["base_url"] == exporter_backends.GROQ_BASE_URL
+    call = FakeClient.last_instance.audio.transcriptions.calls[0]
+    assert call["model"] == "whisper-large-v3-turbo"
+    assert call["language"] == "he"
+    assert call["response_format"] == "verbose_json"
 
 
 def test_pipeline_uses_real_backend_by_default(monkeypatch, tmp_path):

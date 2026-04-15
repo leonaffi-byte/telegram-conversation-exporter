@@ -11,27 +11,29 @@ Current features:
 - JSON export validated against a strict schema
 - Markdown transcript export
 - media validation
-- real transcription backend wiring with Hebrew default
-- transcription provider selection:
-  - auto
-  - local
-  - groq
-  - grok (alias to groq)
-  - openai
+- Groq transcription for Telegram voice messages
+- default transcription stack tuned for Hebrew:
+  - provider: Groq
+  - model: `whisper-large-v3-turbo`
+  - language hint: `he`
 - deterministic test suite with fixtures
 
-Important note:
-This version currently reuses Hermes Agent's transcription stack (`tools.transcription_tools`) for local/Groq/OpenAI transcription behavior. That means this repository is best used together with Hermes Agent installed in the environment.
+Notes:
+- This repository is now standalone. It does not depend on Hermes Agent internals.
+- Real transcription requires `GROQ_API_KEY` in the environment.
+- Image description and OCR are still stubbed for now.
 
 ## Install
-
-Recommended for now inside a Hermes-capable environment:
 
 ```bash
 pip install -e .
 ```
 
-If you are not already using Hermes Agent, make sure `hermes-agent` is installed in the same Python environment as this package.
+## Environment
+
+```bash
+export GROQ_API_KEY=your_groq_api_key
+```
 
 ## CLI
 
@@ -50,7 +52,8 @@ tce export \
   --range 100:250 \
   --output-dir ./out \
   --transcribe-voice \
-  --transcription-provider auto \
+  --transcription-provider groq \
+  --transcription-model whisper-large-v3-turbo \
   --transcription-language he \
   --describe-images
 ```
@@ -64,10 +67,20 @@ tce export \
   --dry-run
 ```
 
+Test-only stub transcription:
+
+```bash
+tce export \
+  --source /path/to/result.json \
+  --chat-ref chat_01 \
+  --transcribe-voice \
+  --transcription-provider stub
+```
+
 ## Tests
 
 ```bash
-pytest -n 0 tests/telegram_exporter -q
+pytest -n 0 tests -q
 ```
 
 ## Docs

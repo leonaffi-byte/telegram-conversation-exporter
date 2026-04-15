@@ -21,8 +21,8 @@ class ExportConfig:
     output_dir: Path
     range: RangeConfig = field(default_factory=RangeConfig)
     transcribe_voice: bool = False
-    transcription_provider: str = "auto"
-    transcription_model: Optional[str] = None
+    transcription_provider: str = "groq"
+    transcription_model: Optional[str] = "whisper-large-v3-turbo"
     transcription_language: Optional[str] = "he"
     stub_transcription: bool = False
     describe_images: bool = False
